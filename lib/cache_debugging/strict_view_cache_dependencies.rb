@@ -1,5 +1,7 @@
 module CacheDebugging
   module StrictViewCacheDependencies
+    extend ActiveSupport::Concern
+
     class TemplateDependencyException < Exception
       def initialize(partial, template, dependencies)
         @partial = partial
@@ -12,18 +14,23 @@ module CacheDebugging
       end
     end
 
-    def cache(name = {}, options = nil, &block)
+    included do
+      alias_method_chain :cache, :template_dependencies
+      alias_method_chain :render, :template_dependencies
+    end
+
+    def cache_with_template_dependencies(name = {}, options = nil, &block)
       if current_template
         dependencies = CacheDigests::TemplateDigestor.new(current_template, lookup_context.rendered_format || :html, ApplicationController.new.lookup_context).nested_dependencies.deep_flatten
         cache_blocks.push({
           :template => current_template,
           :dependencies => dependencies
         })
-        ret = super
+        ret = cache_without_template_dependencies(name, options, &block)
         cache_blocks.pop
         ret
       else
-        super
+        cache_without_template_dependencies(name, options, &block)
       end
     end
 
@@ -35,7 +42,7 @@ module CacheDebugging
       @virtual_path
     end
 
-    def render(*args)
+    def render_with_template_dependencies(*args)
       if cache_blocks.length > 0
         options = args.first
         if options.is_a?(Hash)
@@ -48,7 +55,7 @@ module CacheDebugging
           end
         end
       end
-      super
+      render_without_template_dependencies(*args)
     end
 
     protected

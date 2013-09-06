@@ -8,7 +8,7 @@ if Rails::VERSION::MAJOR != 4
 end
 
 module CacheDebugging
-  autoload :StrictCacheViewDependencies, 'cache_debugging/strict_cache_view_dependencies'
+  autoload :StrictViewCacheDependencies, 'cache_debugging/strict_view_cache_dependencies'
 end
 
 require 'cache_debugging/railtie'
