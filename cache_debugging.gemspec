@@ -7,6 +7,7 @@ Gem::Specification.new do |s|
   s.description = 'Verify cache key dependencies'
   s.summary = 'Verify cache key dependencies via random sampling'
   s.add_dependency "cache_digests", "~> 0.3.0"
+  s.add_dependency "rails", ">= 3.2.0"
 
   s.author = "Jeff Ching"
   s.email = "ching.jeff@gmail.com"

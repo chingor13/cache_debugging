@@ -1,18 +1,6 @@
 module CacheDebugging
-  module StrictViewCacheDependencies
+  module StrictDependencies
     extend ActiveSupport::Concern
-
-    class TemplateDependencyException < Exception
-      def initialize(partial, template, dependencies)
-        @partial = partial
-        @template = template
-        @dependencies = dependencies
-      end
-
-      def message
-        %{#{@partial} not in template cache dependency tree for #{@template}: #{@dependencies.inspect}"}
-      end
-    end
 
     included do
       alias_method_chain :cache, :template_dependencies
@@ -23,8 +11,8 @@ module CacheDebugging
       if current_template
         dependencies = CacheDigests::TemplateDigestor.new(current_template, lookup_context.rendered_format || :html, ApplicationController.new.lookup_context).nested_dependencies.deep_flatten
         cache_blocks.push({
-          :template => current_template,
-          :dependencies => dependencies
+          template: current_template,
+          dependencies: dependencies
         })
         ret = cache_without_template_dependencies(name, options, &block)
         cache_blocks.pop
@@ -34,15 +22,7 @@ module CacheDebugging
       end
     end
 
-    def cache_blocks
-      @cache_blocks ||= []
-    end
-
-    def current_template
-      @virtual_path
-    end
-
-    def render_with_template_dependencies(*args)
+    def render_with_template_dependencies(*args, &block)
       if cache_blocks.length > 0
         options = args.first
         if options.is_a?(Hash)
@@ -55,14 +35,26 @@ module CacheDebugging
           end
         end
       end
-      render_without_template_dependencies(*args)
+      render_without_template_dependencies(*args, &block)
     end
 
-    protected
+    private
+
+    def cache_blocks
+      @cache_blocks ||= []
+    end
+
+    def current_template
+      @virtual_path
+    end
 
     def validate_partial!(partial)
       unless valid_partial?(partial)
-        raise TemplateDependencyException.new(partial, cache_blocks.last[:template], cache_blocks.last[:dependencies])
+        ActiveSupport::Notifications.publish("cache_debugging.cache_dependency_missing", Time.now, Time.now, SecureRandom.hex(10), {
+          partial: partial,
+          template: cache_blocks.last[:template],
+          dependencies: cache_blocks.last[:dependencies]
+        })
       end
     end
 
