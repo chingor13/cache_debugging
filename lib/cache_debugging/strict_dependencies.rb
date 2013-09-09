@@ -3,23 +3,7 @@ module CacheDebugging
     extend ActiveSupport::Concern
 
     included do
-      alias_method_chain :cache, :template_dependencies
       alias_method_chain :render, :template_dependencies
-    end
-
-    def cache_with_template_dependencies(name = {}, options = nil, &block)
-      if current_template
-        dependencies = CacheDigests::TemplateDigestor.new(current_template, lookup_context.rendered_format || :html, ApplicationController.new.lookup_context).nested_dependencies.deep_flatten
-        cache_blocks.push({
-          template: current_template,
-          dependencies: dependencies
-        })
-        ret = cache_without_template_dependencies(name, options, &block)
-        cache_blocks.pop
-        ret
-      else
-        cache_without_template_dependencies(name, options, &block)
-      end
     end
 
     def render_with_template_dependencies(*args, &block)
@@ -39,14 +23,6 @@ module CacheDebugging
     end
 
     private
-
-    def cache_blocks
-      @cache_blocks ||= []
-    end
-
-    def current_template
-      @virtual_path
-    end
 
     def validate_partial!(partial)
       unless valid_partial?(partial)

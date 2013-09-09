@@ -9,6 +9,10 @@ module CacheDebugging
     )
 
     initializer "cache_debugging.setup", :before => 'cache_digests' do |app|
+      ActiveSupport.on_load(:action_view) do
+        include CacheDebugging::CacheBlocks
+      end
+
       if app.config.cache_debugging.strict_dependencies
         ActiveSupport.on_load(:action_view) do
           include CacheDebugging::StrictDependencies

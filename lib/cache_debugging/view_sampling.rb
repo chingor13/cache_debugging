@@ -1,11 +1,22 @@
 module CacheDebugging
   module ViewSampling
+    extend ActiveSupport::Concern
+
+    included do
+      alias_method_chain :cache, :view_sampling
+    end
+
+    def cache_with_view_sampling(name = {}, options = nil, &block)
+      cache_without_view_sampling(name, options, &block)
+      @_force_view_sampling = false if cache_block_depth == @_force_view_sampling
+    end
 
     private
 
     def fragment_for(name = {}, options = nil, &block)
       if fragment = controller.read_fragment(name, options)
         return fragment unless should_sample?(options)
+        @_force_view_sampling = cache_block_depth
 
         uncached = _render_block(&block)
         handle_cache_mismatch(fragment, uncached, name) unless uncached == fragment
@@ -35,6 +46,8 @@ module CacheDebugging
     end
 
     def should_sample?(options)
+      return true if @_force_view_sampling
+
       sample = (options || {}).fetch(:sample) do
         Rails.application.config.cache_debugging.view_sampling
       end.to_f
