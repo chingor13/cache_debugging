@@ -16,4 +16,6 @@ Gem::Specification.new do |s|
 
   s.files = `git ls-files`.split("\n")
   s.test_files = Dir.glob('test/*_test.rb')
+
+  s.add_development_dependency "sqlite3"
 end
