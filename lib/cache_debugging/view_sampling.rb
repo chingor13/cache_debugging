@@ -2,13 +2,28 @@ module CacheDebugging
   module ViewSampling
     extend ActiveSupport::Concern
 
+    mattr_accessor :force_sampling
+
+    def self.force_sampling?
+      !!self.force_sampling
+    end
+
+    def self.view_sampling_rate
+      Rails.application.config.cache_debugging.view_sampling
+    end
+
+    def self.view_sampling_enabled?
+      !!view_sampling_rate
+    end
+
     included do
       alias_method_chain :cache, :view_sampling
     end
 
+    # clear forcing of view sampling if it's been initiated
     def cache_with_view_sampling(name = {}, options = nil, &block)
       cache_without_view_sampling(name, options, &block)
-      @_force_view_sampling = false if cache_depth == 0
+      CacheDebugging::ViewSampling.force_sampling = false if cache_depth == 0
     end
 
     private
@@ -18,7 +33,7 @@ module CacheDebugging
     def fragment_for(name = {}, options = nil, &block)
       if fragment = controller.read_fragment(name, options)
         return fragment unless should_sample?(options)
-        @_force_view_sampling = true
+        CacheDebugging::ViewSampling.force_sampling = true
 
         _render_block(&block).tap do |uncached|
           handle_cache_mismatch(fragment, uncached, name) unless uncached == fragment
@@ -48,10 +63,10 @@ module CacheDebugging
     end
 
     def should_sample?(options)
-      return false unless Utils.view_sampling_enabled?
-      return true if @_force_view_sampling
+      return false unless CacheDebugging::ViewSampling.view_sampling_enabled?
+      return true if CacheDebugging::ViewSampling.force_sampling?
 
-      sample = (options || {}).fetch(:sample) { Utils.view_sampling_rate }.to_f
+      sample = (options || {}).fetch(:sample) { CacheDebugging::ViewSampling.view_sampling_rate }.to_f
       rand <= sample
     end
 

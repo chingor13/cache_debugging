@@ -2,13 +2,17 @@ module CacheDebugging
   module StrictDependencies
     extend ActiveSupport::Concern
 
+    def self.strict_dependencies_enabled?
+      !!Rails.application.config.cache_debugging.strict_dependencies
+    end
+
     included do
       alias_method_chain :render, :template_dependencies
     end
 
     # every time we render, we want to check if the partial is in the dependency list
     def render_with_template_dependencies(*args, &block)
-      if Utils.strict_dependencies_enabled? && cache_blocks.length > 0
+      if CacheDebugging::StrictDependencies.strict_dependencies_enabled? && cache_blocks.length > 0
         options = args.first
         if options.is_a?(Hash)
           if partial = options[:partial]
