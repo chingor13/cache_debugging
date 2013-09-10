@@ -45,8 +45,9 @@ module CacheDebugging
 
     # clear forcing of view sampling if it's been initiated
     def cache_with_view_sampling(name = {}, options = nil, &block)
-      cache_without_view_sampling(name, options, &block)
-      CacheDebugging::ViewSampling.force_sampling = false if cache_depth == 0
+      cache_without_view_sampling(name, options, &block).tap do
+        CacheDebugging::ViewSampling.force_sampling = false if cache_depth == 0
+      end
     end
 
     private
