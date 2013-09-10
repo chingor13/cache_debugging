@@ -8,7 +8,7 @@ module CacheDebugging
 
     def cache_with_view_sampling(name = {}, options = nil, &block)
       cache_without_view_sampling(name, options, &block)
-      @_force_view_sampling = false if cache_depth == @_force_view_sampling
+      @_force_view_sampling = false if cache_depth == 0
     end
 
     private
@@ -18,12 +18,11 @@ module CacheDebugging
     def fragment_for(name = {}, options = nil, &block)
       if fragment = controller.read_fragment(name, options)
         return fragment unless should_sample?(options)
-        @_force_view_sampling = cache_depth
+        @_force_view_sampling = true
 
-        uncached = _render_block(&block)
-        handle_cache_mismatch(fragment, uncached, name) unless uncached == fragment
-
-        uncached
+        _render_block(&block).tap do |uncached|
+          handle_cache_mismatch(fragment, uncached, name) unless uncached == fragment
+        end
       else
         fragment = _render_block(&block)
         controller.write_fragment(name, fragment, options)
@@ -49,19 +48,15 @@ module CacheDebugging
     end
 
     def should_sample?(options)
-      return false unless view_sampling_rate
+      return false unless Utils.view_sampling_enabled?
       return true if @_force_view_sampling
 
-      sample = (options || {}).fetch(:sample) { view_sampling_rate }.to_f
+      sample = (options || {}).fetch(:sample) { Utils.view_sampling_rate }.to_f
       rand <= sample
     end
 
-    def view_sampling_rate
-      Rails.application.config.cache_debugging.view_sampling
-    end
-
     def handle_cache_mismatch(cached, uncached, cache_key)
-      ActiveSupport::Notifications.publish("cache_debugging.cache_mismatch", Time.now, Time.now, SecureRandom.hex(10), {
+      Utils.publish_notification("cache_debugging.cache_mismatch", {
         cached: cached,
         uncached: uncached,
         template: current_template,

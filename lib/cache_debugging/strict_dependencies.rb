@@ -8,7 +8,7 @@ module CacheDebugging
 
     # every time we render, we want to check if the partial is in the dependency list
     def render_with_template_dependencies(*args, &block)
-      if should_check_template_dependencies? && cache_blocks.length > 0
+      if Utils.strict_dependencies_enabled? && cache_blocks.length > 0
         options = args.first
         if options.is_a?(Hash)
           if partial = options[:partial]
@@ -16,7 +16,7 @@ module CacheDebugging
           end
         else
           (options.respond_to?(:to_ary) ? options.to_ary : Array(options)).each do |object|
-            validate_partial!(object_partial_path(object))
+            validate_partial!(Utils.object_partial_path(object))
           end
         end
       end
@@ -27,7 +27,7 @@ module CacheDebugging
 
     def validate_partial!(partial)
       unless valid_partial?(partial)
-        ActiveSupport::Notifications.publish("cache_debugging.cache_dependency_missing", Time.now, Time.now, SecureRandom.hex(10), {
+        Utils.publish_notification("cache_debugging.cache_dependency_missing", {
           partial: partial,
           template: cache_blocks.last[:template],
           dependencies: cache_blocks.last[:dependencies]
@@ -39,17 +39,5 @@ module CacheDebugging
       cache_blocks.last[:dependencies].include?(partial)
     end
 
-    def should_check_template_dependencies?
-      Rails.application.config.cache_debugging.strict_dependencies
-    end
-
-    def object_partial_path(object)
-      partial = begin
-        object.to_partial_path
-      rescue 
-        object.class.model_name.partial_path
-      end
-      partial.split("/").tap{|parts| parts.last.gsub!(/^_?/, "_")}.join("/")
-    end
   end
 end
