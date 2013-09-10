@@ -1,14 +1,17 @@
 pete:
   name: "Pete the Plumber"
   detail_type: "Plumber"
-  detail_id: <%= ActiveRecord::FixtureSet.identify(:pete) %>
+  detail_id: <%= ActiveRecord::Fixtures.identify(:pete) %>
+  updated_at: <%= Time.now - 10 %>
 
 george:
   name: "George the Gardener"
   detail_type: "Gardener"
-  detail_id: <%= ActiveRecord::FixtureSet.identify(:george) %>
+  detail_id: <%= ActiveRecord::Fixtures.identify(:george) %>
+  updated_at: <%= Time.now - 10 %>
 
 eric:
   name: "Eric the Electrician"
   detail_type: "Electrician"
-  detail_id: <%= ActiveRecord::FixtureSet.identify(:eric) %>
+  detail_id: <%= ActiveRecord::Fixtures.identify(:eric) %>
+  updated_at: <%= Time.now - 10 %>

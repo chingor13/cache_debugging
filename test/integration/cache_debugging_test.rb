@@ -1,13 +1,15 @@
 require 'test_helper'
 
 class CacheDebuggingTest < ActionDispatch::IntegrationTest
+  self.use_transactional_fixtures = true
+  fixtures :all
+
   def setup
     Rails.cache.clear
     super
   end
 
   def teardown
-    Tweet.destroy_all
     super
   end
 
@@ -23,7 +25,7 @@ class CacheDebuggingTest < ActionDispatch::IntegrationTest
         assert_template partial: "workers/_tweets", count: Worker.count
 
         # modify a worker
-        Worker.first.touch
+        assert Worker.first.touch
         get workers_path
         assert_template partial: "workers/_tweets", count: Worker.count + 1
       end
