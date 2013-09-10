@@ -46,13 +46,15 @@ module CacheDebugging
     end
 
     def should_sample?(options)
+      return false unless view_sampling_rate
       return true if @_force_view_sampling
 
-      sample = (options || {}).fetch(:sample) do
-        Rails.application.config.cache_debugging.view_sampling
-      end.to_f
-
+      sample = (options || {}).fetch(:sample) { view_sampling_rate }.to_f
       rand <= sample
+    end
+
+    def view_sampling_rate
+      Rails.application.config.cache_debugging.view_sampling
     end
 
     def handle_cache_mismatch(cached, uncached, cache_key)

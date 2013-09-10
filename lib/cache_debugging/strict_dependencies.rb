@@ -7,7 +7,7 @@ module CacheDebugging
     end
 
     def render_with_template_dependencies(*args, &block)
-      if cache_blocks.length > 0
+      if should_check_template_dependencies? && cache_blocks.length > 0
         options = args.first
         if options.is_a?(Hash)
           if partial = options[:partial]
@@ -36,6 +36,10 @@ module CacheDebugging
 
     def valid_partial?(partial)
       cache_blocks.last[:dependencies].include?(partial)
+    end
+
+    def should_check_template_dependencies?
+      Rails.application.config.cache_debugging.strict_dependencies
     end
 
     def object_partial_path(object)

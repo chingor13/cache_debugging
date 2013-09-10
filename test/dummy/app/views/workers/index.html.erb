@@ -1,0 +1,17 @@
+<h1>Workers</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Id</th>
+      <th>Name</th>
+      <th>Extra</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <%= cache @workers do %>
+      <%= render @workers %>
+    <% end %>
+  </tbody>
+</table>

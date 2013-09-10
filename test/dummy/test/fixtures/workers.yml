@@ -1,0 +1,14 @@
+pete:
+  name: "Pete the Plumber"
+  detail_type: "Plumber"
+  detail_id: <%= ActiveRecord::FixtureSet.identify(:pete) %>
+
+george:
+  name: "George the Gardener"
+  detail_type: "Gardener"
+  detail_id: <%= ActiveRecord::FixtureSet.identify(:george) %>
+
+eric:
+  name: "Eric the Electrician"
+  detail_type: "Electrician"
+  detail_id: <%= ActiveRecord::FixtureSet.identify(:eric) %>

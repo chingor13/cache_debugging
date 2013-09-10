@@ -1,0 +1,12 @@
+<% cache worker do %>
+  <tr>
+    <td><%= worker.id %></td>
+    <td><%= worker.name %></td>
+    <td>
+      <%= render worker.detail %>
+    </td>
+    <td>
+      <%= render partial: 'workers/tweets', locals: {worker: worker} %>
+    </td>
+  </tr>
+<% end %>
