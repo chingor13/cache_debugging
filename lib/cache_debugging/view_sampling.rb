@@ -16,6 +16,29 @@ module CacheDebugging
       !!view_sampling_rate
     end
 
+    # code taken from fragment_for
+    def self.render_block(view, &block)
+      # VIEW TODO: Make #capture usable outside of ERB
+      # This dance is needed because Builder can't use capture
+      output_buffer = view.output_buffer
+      pos = output_buffer.length
+      yield
+      output_safe = output_buffer.html_safe?
+      fragment = output_buffer.slice!(pos..-1)
+      if output_safe
+        view.output_buffer = output_buffer.class.new(output_buffer)
+      end
+      fragment
+    end
+
+    def self.should_sample?(options)
+      return false unless view_sampling_enabled?
+      return true if force_sampling?
+
+      sample = (options || {}).fetch(:sample) { view_sampling_rate }.to_f
+      rand <= sample
+    end
+
     included do
       alias_method_chain :cache, :view_sampling
     end
@@ -32,51 +55,26 @@ module CacheDebugging
     #   must override fragement_for here
     def fragment_for(name = {}, options = nil, &block)
       if fragment = controller.read_fragment(name, options)
-        return fragment unless should_sample?(options)
+        return fragment unless CacheDebugging::ViewSampling.should_sample?(options)
         CacheDebugging::ViewSampling.force_sampling = true
 
-        _render_block(&block).tap do |uncached|
-          handle_cache_mismatch(fragment, uncached, name) unless uncached == fragment
+        CacheDebugging::ViewSampling.render_block(self, &block).tap do |uncached|
+          Utils.publish_notification("cache_debugging.cache_mismatch", {
+            cached: fragment,
+            uncached: uncached,
+            template: current_template,
+            cache_key: name
+          }) unless uncached == fragment
         end
       else
-        fragment = _render_block(&block)
+        fragment = CacheDebugging::ViewSampling.render_block(self, &block)
         controller.write_fragment(name, fragment, options)
       end
-    end
-
-    # code taken from fragment_for
-    def _render_block(&block)
-      # VIEW TODO: Make #capture usable outside of ERB
-      # This dance is needed because Builder can't use capture
-      pos = output_buffer.length
-      yield
-      output_safe = output_buffer.html_safe?
-      fragment = output_buffer.slice!(pos..-1)
-      if output_safe
-        self.output_buffer = output_buffer.class.new(output_buffer)
-      end
-      fragment
     end
 
     def current_template
       @virtual_path
     end
 
-    def should_sample?(options)
-      return false unless CacheDebugging::ViewSampling.view_sampling_enabled?
-      return true if CacheDebugging::ViewSampling.force_sampling?
-
-      sample = (options || {}).fetch(:sample) { CacheDebugging::ViewSampling.view_sampling_rate }.to_f
-      rand <= sample
-    end
-
-    def handle_cache_mismatch(cached, uncached, cache_key)
-      Utils.publish_notification("cache_debugging.cache_mismatch", {
-        cached: cached,
-        uncached: uncached,
-        template: current_template,
-        cache_key: cache_key
-      })
-    end
   end
 end
