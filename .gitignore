@@ -19,3 +19,5 @@
 *.mwb.beforefix
 
 *.DS_Store
+
+Gemfile.lock
