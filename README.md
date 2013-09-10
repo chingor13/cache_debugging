@@ -1,6 +1,4 @@
-[![Build Status](https://travis-ci.org/chingor13/cache_debugging.png)](https://travis-ci.org/chingor13/cache_debugging)
-
-# CacheDebugging
+# CacheDebugging [![Build Status](https://travis-ci.org/chingor13/cache_debugging.png)](https://travis-ci.org/chingor13/cache_debugging)
 
 `cache_debugging` aims to detangle `cache_digests`'s template dependencies.  It currently contains 2 different hooks to check for cache integrity.
 
