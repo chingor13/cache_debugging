@@ -12,6 +12,7 @@ module CacheDebugging
   autoload :StrictDependencies, 'cache_debugging/strict_dependencies'
   autoload :ViewSampling, 'cache_debugging/view_sampling'
   autoload :Digestor, 'cache_debugging/digestor'
+  autoload :Utils, 'cache_debugging/utils'
 end
 
 require 'cache_debugging/railtie'

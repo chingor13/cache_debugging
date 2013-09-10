@@ -1,3 +1,3 @@
 module CacheDebugging
-  Digestor = CacheDigestor::TemplateDigestor rescue ActionView::Digestor
+  Digestor = CacheDigests::TemplateDigestor rescue ActionView::Digestor
 end

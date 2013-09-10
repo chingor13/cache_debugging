@@ -8,15 +8,17 @@ module CacheDebugging
 
     def cache_with_view_sampling(name = {}, options = nil, &block)
       cache_without_view_sampling(name, options, &block)
-      @_force_view_sampling = false if cache_block_depth == @_force_view_sampling
+      @_force_view_sampling = false if cache_depth == @_force_view_sampling
     end
 
     private
 
+    # since there are no hooks on a cache hit, that also has access to the render block, we
+    #   must override fragement_for here
     def fragment_for(name = {}, options = nil, &block)
       if fragment = controller.read_fragment(name, options)
         return fragment unless should_sample?(options)
-        @_force_view_sampling = cache_block_depth
+        @_force_view_sampling = cache_depth
 
         uncached = _render_block(&block)
         handle_cache_mismatch(fragment, uncached, name) unless uncached == fragment
@@ -28,6 +30,7 @@ module CacheDebugging
       end
     end
 
+    # code taken from fragment_for
     def _render_block(&block)
       # VIEW TODO: Make #capture usable outside of ERB
       # This dance is needed because Builder can't use capture

@@ -6,6 +6,7 @@ module CacheDebugging
       alias_method_chain :render, :template_dependencies
     end
 
+    # every time we render, we want to check if the partial is in the dependency list
     def render_with_template_dependencies(*args, &block)
       if should_check_template_dependencies? && cache_blocks.length > 0
         options = args.first
