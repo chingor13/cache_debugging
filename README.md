@@ -52,6 +52,14 @@ config.cache_debugging.strict_dependencies = true
 
 We keep track of each cache block with it's dependencies and trigger an ActiveSupport notification (`cache_debugging.cache_dependency_missing`) if we're rendering a partial not included any parent's template dependencies.  You can handle this notification any way you want.
 
+In an initializer:
+```
+ActiveSupport::Notifications.subscribe 'cache_debugging.cache_dependency_missing' do |*args|
+  event = ActiveSupport::Notifications::Event.new(*args)
+  raise TemplateDependencyException.new(event.payload[:partial], event.payload[:template], event.payload[:dependencies])
+end
+```
+
 ## View Sampling
 
 This module ensures that you have declared all the variable dependencies for your cache block.
@@ -102,3 +110,11 @@ config.cache_debugging.view_sampling = 0.1
 ```
 
 Every X% of cache hits (10% for the above example), we will re-render the cache block anyways and compare the results.  If they don't match, we trigger and ActiveSupport notification (`cache_debugging.cache_mismatch`). You can handle this notification any way you want.
+
+In an initializer:
+```
+ActiveSupport::Notifications.subscribe 'cache_debugging.cache_mismatch' do |*args|
+  event = ActiveSupport::Notifications::Event.new(*args)
+  raise CacheMismatchException.new(event.payload[:template], event.payload[:cache_key])
+end
+```
