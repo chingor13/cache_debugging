@@ -82,7 +82,7 @@ Let's say we decided to replace `assigned_to.name` with "me" if the ticket is as
 
 ```
 # tickets/_ticket.html.erb
-<% cache(ticket, current_user) do %>
+<% cache(ticket) do %>
   <tr>
     <td><%= ticket.id %></td>
     <td><%= ticket.title %></td>
